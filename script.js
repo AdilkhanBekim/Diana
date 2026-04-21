@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
     
-    const darkRed = '#5c0101';
-    const black = '#000000';
+    const darkRed = '#8a2be2'; // было #5c0101
+    const black = '#050010';   // было #000000
     const particles = [];
     const waves = [];
     const vortexes = [];
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.width / 2, canvas.height / 2, 0, 
             canvas.width / 2, canvas.height / 2, canvas.width / 2
         );
-        radialGradient.addColorStop(0, darkRed);
+        radialGradient.addColorStop(0, '#c77dff'); // сиреневый
         radialGradient.addColorStop(1, black);
         return { radial: radialGradient };
     }
@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.lineTo(0, canvas.height);
         ctx.closePath();
         const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, 'rgba(92, 1, 1, 0.3)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
+        gradient.addColorStop(0, 'rgba(199, 125, 255, 0.3)');
+        gradient.addColorStop(1, 'rgba(5, 0, 16, 0.1)');
         ctx.fillStyle = gradient;
         ctx.fill();
     }
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
             particle.x, particle.y, 0,
             particle.x, particle.y, pulsatingRadius
         );
-        gradient.addColorStop(0, darkRed);
+        gradient.addColorStop(0, '#c77dff');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = gradient;
         ctx.fill();
@@ -108,8 +108,8 @@ document.addEventListener('DOMContentLoaded', function() {
             vortex.x, vortex.y, 0,
             vortex.x, vortex.y, vortex.radius
         );
-        gradient.addColorStop(0, 'rgba(92, 1, 1, 0.2)');
-        gradient.addColorStop(0.7, 'rgba(92, 1, 1, 0.05)');
+        gradient.addColorStop(0, 'rgba(138, 43, 226, 0.2)');
+        gradient.addColorStop(0.7, 'rgba(200, 162, 255, 0.08)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.beginPath();
         ctx.arc(vortex.x, vortex.y, vortex.radius, 0, Math.PI * 2);
@@ -128,9 +128,9 @@ document.addEventListener('DOMContentLoaded', function() {
         waves.forEach(wave => drawWave(wave, time));
         vortexes.forEach(vortex => drawVortex(vortex, time));
         particles.forEach(particle => drawParticle(particle, time));
-        ctx.fillStyle = `rgba(0, 0, 0, ${0.05 + Math.sin(time * 0.5) * 0.05})`;
+        ctx.fillStyle = `rgba(5, 0, 16, ${0.05 + Math.sin(time * 0.5) * 0.05})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = `rgba(92, 1, 1, ${0.1 + Math.sin(time * 0.3) * 0.05})`;
+        ctx.strokeStyle = `rgba(199, 125, 255, ${0.1 + Math.sin(time * 0.3) * 0.05})`;
         ctx.lineWidth = 1;
         for (let i = 0; i < 5; i++) {
             const offset = i * Math.PI / 5;
