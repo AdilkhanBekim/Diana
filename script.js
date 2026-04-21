@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
     
-    const darkRed = '#6a0dad';
+    const darkRed = '#5c0101';
     const black = '#000000';
     const particles = [];
     const waves = [];
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.lineTo(0, canvas.height);
         ctx.closePath();
         const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, 'rgba(186, 85, 211, 0.3)');
+        gradient.addColorStop(0, 'rgba(92, 1, 1, 0.3)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
         ctx.fillStyle = gradient;
         ctx.fill();
@@ -108,8 +108,8 @@ document.addEventListener('DOMContentLoaded', function() {
             vortex.x, vortex.y, 0,
             vortex.x, vortex.y, vortex.radius
         );
-        gradient.addColorStop(0, 'rgba(186, 85, 211, 0.2)');
-        gradient.addColorStop(0.7, 'rgba(186, 85, 211, 0.05)');
+        gradient.addColorStop(0, 'rgba(92, 1, 1, 0.2)');
+        gradient.addColorStop(0.7, 'rgba(92, 1, 1, 0.05)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.beginPath();
         ctx.arc(vortex.x, vortex.y, vortex.radius, 0, Math.PI * 2);
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
         particles.forEach(particle => drawParticle(particle, time));
         ctx.fillStyle = `rgba(0, 0, 0, ${0.05 + Math.sin(time * 0.5) * 0.05})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = `rgba(186, 85, 211, ${0.1 + Math.sin(time * 0.3) * 0.05})`;
+        ctx.strokeStyle = `rgba(92, 1, 1, ${0.1 + Math.sin(time * 0.3) * 0.05})`;
         ctx.lineWidth = 1;
         for (let i = 0; i < 5; i++) {
             const offset = i * Math.PI / 5;
@@ -146,3 +146,265 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     animate();
 });
+
+const loaderScreen = document.getElementById('loader');
+const bgCanvas = document.getElementById('bgCanvas');
+const music = document.getElementById('background-music');
+const sadMusic = document.getElementById('sad-music');
+const countdownEl = document.getElementById('countdown');
+const countdownNumber = document.getElementById('countdown-number');
+
+let activeSlideId = ''; 
+let audioTransitionInProgress = false;
+const FADE_DURATION = 1500;
+const TARGET_AUDIO_VOLUME = 0.7;
+
+
+function fadeAudio(audio, targetVolume, duration, callback) {
+    if (!audio) {
+        if (callback) callback();
+        return;
+    }
+    const stepTime = 50;
+    const steps = Math.max(1, duration / stepTime);
+    const initialVolume = audio.volume;
+    const volumeStep = (targetVolume - initialVolume) / steps;
+    let currentStep = 0;
+
+    const fadeInterval = setInterval(() => {
+        currentStep++;
+        let newVolume = initialVolume + (volumeStep * currentStep);
+
+        if (targetVolume > initialVolume) {
+            newVolume = Math.min(targetVolume, newVolume);
+        } else {
+            newVolume = Math.max(targetVolume, newVolume);
+        }
+        newVolume = Math.max(0, Math.min(1, newVolume));
+
+        audio.volume = newVolume;
+
+        if (currentStep >= steps) {
+            clearInterval(fadeInterval);
+            audio.volume = targetVolume;
+            if (callback) callback();
+        }
+    }, stepTime);
+}
+
+
+function simulateLoading() {
+    setTimeout(() => {
+        loaderScreen.style.opacity = '0';
+        setTimeout(() => {
+            loaderScreen.style.display = 'none';
+            bgCanvas.style.opacity = '1';
+            setTimeout(() => {
+                showSlide('slide-1'); 
+            }, 500);
+        }, 1000);
+    }, 3000);
+}
+
+window.addEventListener('load', simulateLoading);
+
+function showSlide(slideId) {
+    const slides = document.querySelectorAll('.slide');
+    slides.forEach(slide => {
+        slide.classList.remove('active');
+        const mb = slide.querySelector('.message-box');
+        const bc = slide.querySelector('.button-container');
+        const ic = slide.querySelector('.img-container');
+        if (mb) mb.classList.remove('visible');
+        if (bc) bc.classList.remove('visible');
+        if (ic) ic.classList.remove('visible');
+    });
+    
+    const currentSlide = document.getElementById(slideId);
+    if (!currentSlide) {
+        console.error("Slide not found:", slideId);
+        return;
+    }
+    currentSlide.classList.add('active');
+    activeSlideId = slideId; 
+    
+    const messageBox = currentSlide.querySelector('.message-box');
+    const buttonContainer = currentSlide.querySelector('.button-container');
+    const imgContainer = currentSlide.querySelector('.img-container');
+    
+    setTimeout(() => {
+        if (imgContainer) {
+            imgContainer.classList.add('visible');
+        }
+        setTimeout(() => {
+            if (messageBox) {
+                messageBox.classList.add('visible');
+            }
+        }, imgContainer ? 200 : (messageBox ? 0 : 0) ); 
+        const primaryContentDelay = (imgContainer || messageBox) ? 500 : 0;
+        setTimeout(() => {
+            if (buttonContainer) {
+                buttonContainer.classList.add('visible');
+            }
+        }, primaryContentDelay);
+    }, 300);
+}
+
+function nextSlide(logicalStepOrContext, option = null) {
+    if (audioTransitionInProgress && 
+        !(logicalStepOrContext === 1 && option === null && !music.paused) &&
+        !(activeSlideId === 'slide-7-no' && (option === 'no-yes' || option === 'no-no'))
+    ) {
+        if(activeSlideId !== 'slide-1' && activeSlideId !== 'slide-7-no') {
+            console.log("Audio transition in progress, slide change blocked.");
+        }
+    }
+
+    const slideToAnimateOut = document.getElementById(activeSlideId);
+    if (slideToAnimateOut) {
+        const messageBox = slideToAnimateOut.querySelector('.message-box');
+        const buttonContainer = slideToAnimateOut.querySelector('.button-container');
+        const imgContainer = slideToAnimateOut.querySelector('.img-container');
+        
+        if (messageBox) messageBox.classList.remove('visible');
+        if (buttonContainer) buttonContainer.classList.remove('visible');
+        if (imgContainer) imgContainer.classList.remove('visible');
+    }
+    
+    let nextSlideIdToShow;
+    
+    switch (logicalStepOrContext) {
+        case 1: nextSlideIdToShow = 'slide-2'; break;
+        case 2: nextSlideIdToShow = 'slide-3'; break;
+        case 3: nextSlideIdToShow = 'slide-4'; break;
+        case 4: nextSlideIdToShow = 'slide-5'; break;
+        case 6: 
+            if (option === 'yes') nextSlideIdToShow = 'slide-7-yes';
+            else if (option === 'no') nextSlideIdToShow = 'slide-7-no';
+            break;
+        case 7: 
+            if (activeSlideId === 'slide-7-yes' && option === 'yes') { 
+                nextSlideIdToShow = 'slide-8-yes';
+            } else if (activeSlideId === 'slide-7-no') { 
+                if (option === 'no-yes') nextSlideIdToShow = 'slide-8-no-yes'; 
+                else if (option === 'no-no') nextSlideIdToShow = 'slide-6'; 
+            }
+            break;
+        default:
+            console.warn("Unhandled logicalStepOrContext in nextSlide:", logicalStepOrContext, option);
+            return; 
+    }
+
+    if (logicalStepOrContext === 1 && option === null) {
+        if (audioTransitionInProgress) return;
+        audioTransitionInProgress = true;
+
+        const startMainMusic = () => {
+            if (music.paused) {
+                 music.volume = 0;
+                 music.play().catch(e => console.error('Music play error:', e));
+            }
+            fadeAudio(music, TARGET_AUDIO_VOLUME, FADE_DURATION, () => {
+                audioTransitionInProgress = false;
+            });
+        };
+
+        if (!sadMusic.paused && sadMusic.volume > 0) {
+            fadeAudio(sadMusic, 0, FADE_DURATION, () => {
+                sadMusic.pause();
+                sadMusic.currentTime = 0;
+                startMainMusic();
+            });
+        } else {
+            startMainMusic();
+        }
+
+    } else if (activeSlideId === 'slide-7-no' && option === 'no-yes' && nextSlideIdToShow === 'slide-8-no-yes') {
+        if (audioTransitionInProgress) return;
+        audioTransitionInProgress = true;
+        fadeAudio(music, 0, FADE_DURATION, () => {
+            music.pause();
+            
+            sadMusic.currentTime = 0;
+            sadMusic.volume = 0;
+            sadMusic.play().catch(e => console.error('Sad music play error:', e));
+            fadeAudio(sadMusic, TARGET_AUDIO_VOLUME, FADE_DURATION, () => {
+                audioTransitionInProgress = false;
+            });
+        });
+    } else if (activeSlideId === 'slide-7-no' && option === 'no-no' && nextSlideIdToShow === 'slide-6') {
+        if (audioTransitionInProgress) return;
+        audioTransitionInProgress = true;
+        fadeAudio(sadMusic, 0, FADE_DURATION, () => {
+            sadMusic.pause();
+            sadMusic.currentTime = 0;
+
+            if (music.paused) {
+                music.volume = 0;
+                music.play().catch(e => console.error('Music play error:', e));
+            }
+            fadeAudio(music, TARGET_AUDIO_VOLUME, FADE_DURATION, () => {
+                audioTransitionInProgress = false;
+            });
+        });
+    }
+    
+    if (nextSlideIdToShow) {
+        setTimeout(() => {
+            showSlide(nextSlideIdToShow);
+        }, 800); 
+    }
+}
+
+function startCountdown() {
+    const currentSlide = document.getElementById('slide-5'); 
+    const messageBox = currentSlide.querySelector('.message-box');
+    const buttonContainer = currentSlide.querySelector('.button-container');
+    
+    if (messageBox) messageBox.classList.remove('visible');
+    if (buttonContainer) buttonContainer.classList.remove('visible');
+    
+    setTimeout(() => {
+        currentSlide.classList.remove('active');
+        
+        countdownEl.classList.add('active');
+        countdownNumber.style.opacity = '0'; 
+        countdownNumber.style.transform = 'scale(0.8)'; 
+        
+        let count = 5;
+        
+        setTimeout(() => {
+            countdownNumber.textContent = count;
+            countdownNumber.style.opacity = '1';
+            countdownNumber.style.transform = 'scale(1)';
+        }, 100);
+
+        const countdownInterval = setInterval(() => {
+            count--;
+            
+            if (count >= 1) { 
+                countdownNumber.style.opacity = '0';
+                countdownNumber.style.transform = 'scale(1.2)'; 
+                
+                setTimeout(() => {
+                    countdownNumber.textContent = count;
+                    countdownNumber.style.opacity = '1';
+                    countdownNumber.style.transform = 'scale(1)'; 
+                }, 300); 
+            } else { 
+                clearInterval(countdownInterval);
+                
+                countdownNumber.style.opacity = '0';
+                countdownNumber.style.transform = 'scale(1.2)';
+                
+                setTimeout(() => {
+                    countdownEl.classList.remove('active');
+                    
+                    setTimeout(() => {
+                        showSlide('slide-6'); 
+                    }, 500); 
+                }, 500); 
+            }
+        }, 1000 + 300); 
+    }, 800); 
+}
